@@ -89,7 +89,12 @@ export interface components {
             valor_total: number;
             /** Format: date-time */
             criadoEm: string;
-            forma_pagamento: components["schemas"]["FormaPagamento"];
+            /**
+             * @deprecated
+             * @description Nome do legado, mantido para os clientes atuais. Use formaPagamento.
+             */
+            forma_pagamento: Omit<components["schemas"]["FormaPagamento"], "tipo">;
+            formaPagamento: components["schemas"]["FormaPagamentoResposta"];
             itens: components["schemas"]["Item"][];
             /**
              * Format: date-time
@@ -130,6 +135,28 @@ export interface components {
              */
             tipo: "boleto";
             linha_digitavel: string;
+            /** Format: date */
+            vencimento: string;
+        };
+        /** @description Forma de pagamento na resposta, em camelCase. Mesmo conteúdo de forma_pagamento (depreciado). */
+        FormaPagamentoResposta: components["schemas"]["PagamentoCartaoResposta"] | components["schemas"]["PagamentoPix"] | components["schemas"]["PagamentoBoletoResposta"];
+        PagamentoCartaoResposta: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            tipo: "cartao";
+            bandeira: string;
+            parcelas: number;
+            finalCartao: string;
+        };
+        PagamentoBoletoResposta: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            tipo: "boleto";
+            linhaDigitavel: string;
             /** Format: date */
             vencimento: string;
         };

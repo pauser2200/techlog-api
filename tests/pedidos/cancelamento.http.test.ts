@@ -79,7 +79,7 @@ describe('US2: recusas do cancelamento', () => {
     it(`recusa pedido ${statusAtual} com 409`, () =>
       comApi(async (chamar) => {
         const problema = await lerProblema(await cancelar(chamar, id), 409);
-        assert.equal(problema.type, '/problemas/cancelamento-nao-permitido');
+        assert.equal(problema.type, 'https://api.techlog.example/problemas/cancelamento-nao-permitido');
         assert.equal(problema.statusAtual, statusAtual);
         assert.equal(problema.instance, `/pedidos/${id}/cancelamento`);
       }));
@@ -98,13 +98,13 @@ describe('US2: recusas do cancelamento', () => {
   it('recusa pedido inexistente com 404', () =>
     comApi(async (chamar) => {
       const problema = await lerProblema(await cancelar(chamar, 'PED-9999'), 404);
-      assert.equal(problema.type, '/problemas/pedido-nao-encontrado');
+      assert.equal(problema.type, 'https://api.techlog.example/problemas/pedido-nao-encontrado');
     }));
 
   it('recusa motivo com 201 caracteres sem alterar o pedido', () =>
     comApi(async (chamar) => {
       const problema = await lerProblema(await cancelar(chamar, 'PED-1001', { motivo: 'a'.repeat(201) }), 400);
-      assert.equal(problema.type, '/problemas/validacao');
+      assert.equal(problema.type, 'https://api.techlog.example/problemas/motivo-invalido');
       assert.equal(problema.campo, 'motivo');
       const pedido = await (await chamar('/pedidos/PED-1001')).json();
       assert.equal(pedido.status, 'criado');
@@ -125,13 +125,13 @@ describe('US2: recusas do cancelamento', () => {
   it('recusa JSON malformado em Problem Details (endpoint novo)', () =>
     comApi(async (chamar) => {
       const problema = await lerProblema(await cancelar(chamar, 'PED-1001', '{motivo'), 400);
-      assert.equal(problema.type, '/problemas/validacao');
+      assert.equal(problema.type, 'https://api.techlog.example/problemas/validacao');
     }));
 
   it('recusa corpo acima de 100 KB em Problem Details (413)', () =>
     comApi(async (chamar) => {
       const problema = await lerProblema(await cancelar(chamar, 'PED-1001', { motivo: 'a'.repeat(200_000) }), 413);
-      assert.equal(problema.type, '/problemas/validacao');
+      assert.equal(problema.type, 'https://api.techlog.example/problemas/validacao');
     }));
 
   it('recusa charset não suportado em Problem Details (415)', () =>
@@ -142,7 +142,7 @@ describe('US2: recusas do cancelamento', () => {
         body: '{"motivo":"x"}',
       });
       const problema = await lerProblema(resposta, 415);
-      assert.equal(problema.type, '/problemas/validacao');
+      assert.equal(problema.type, 'https://api.techlog.example/problemas/validacao');
     }));
 
   it('aplica o limite de 200 caracteres ao motivo sem os espaços das pontas', () =>

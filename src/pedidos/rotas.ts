@@ -3,6 +3,8 @@ import type { Base, FormaPagamento, Item, Status } from './dados.js';
 import { serializarPedido } from './serializar.js';
 
 const LIMITE_MOTIVO = 200;
+// O contrato (openapi/openapi.yaml) declara o type do Problem Details como URI absoluta.
+const PROBLEMAS = 'https://api.techlog.example/problemas';
 const CAMINHO_CANCELAMENTO = /^\/pedidos\/[^/]+\/cancelamento\/?$/;
 
 // O express.json() roda no app, antes deste roteador, então os erros de leitura
@@ -20,7 +22,7 @@ export function tratarJsonInvalidoCancelamento(err: any, req: Request, res: Resp
     typeof err?.type === 'string' && Number.isInteger(err?.status) && err.status >= 400 && err.status < 500;
   if (erroDoCorpo && req.method === 'POST' && CAMINHO_CANCELAMENTO.test(req.path)) {
     enviarProblema(res, {
-      type: '/problemas/validacao',
+      type: `${PROBLEMAS}/validacao`,
       title: 'Requisição inválida',
       status: err.status,
       detail: DETALHE_ERRO_CORPO[err.type] ?? 'Não foi possível ler o corpo da requisição.',
@@ -90,7 +92,7 @@ export function rotasPedidos(base: Base) {
             : undefined;
       if (problemaMotivo) {
         enviarProblema(res, {
-          type: '/problemas/validacao',
+          type: `${PROBLEMAS}/motivo-invalido`,
           title: 'Requisição inválida',
           status: 400,
           detail: problemaMotivo,
@@ -108,7 +110,7 @@ export function rotasPedidos(base: Base) {
         return;
       case 'nao-encontrado':
         enviarProblema(res, {
-          type: '/problemas/pedido-nao-encontrado',
+          type: `${PROBLEMAS}/pedido-nao-encontrado`,
           title: 'Pedido não encontrado',
           status: 404,
           detail: `Não existe pedido com o id ${id}.`,
@@ -117,7 +119,7 @@ export function rotasPedidos(base: Base) {
         return;
       case 'nao-permitido':
         enviarProblema(res, {
-          type: '/problemas/cancelamento-nao-permitido',
+          type: `${PROBLEMAS}/cancelamento-nao-permitido`,
           title: 'Cancelamento não permitido',
           status: 409,
           detail: explicarRecusa(id, resultado.statusAtual),

@@ -21,6 +21,7 @@ Exemplo de um pedido cancelado, com todos os campos que a API pode devolver:
   "valor_total": 79.8,
   "criadoEm": "2026-09-28T10:15:00Z",
   "forma_pagamento": { "tipo": "pix", "chave": "ana.souza@exemplo.com" },
+  "formaPagamento": { "tipo": "pix", "chave": "ana.souza@exemplo.com" },
   "itens": [{ "sku": "CX-PEQ", "quantidade": 2, "preco_unitario": 39.9 }],
   "canceladoEm": "2026-10-01T09:00:00Z",
   "motivoCancelamento": "cliente desistiu"
@@ -30,8 +31,11 @@ Exemplo de um pedido cancelado, com todos os campos que a API pode devolver:
 - `status`: `criado`, `pago`, `enviado`, `entregue` ou `cancelado`.
 - `canceladoEm` e `motivoCancelamento` só aparecem em pedidos cancelados; `motivoCancelamento`,
   só quando o cancelamento teve motivo.
-- `forma_pagamento` muda conforme o `tipo`: `pix` traz `chave`; `cartao` traz `bandeira`,
-  `parcelas` e `final_cartao`; `boleto` traz `linha_digitavel` e `vencimento`.
+- `formaPagamento` muda conforme o `tipo`: `pix` traz `chave`; `cartao` traz `bandeira`,
+  `parcelas` e `finalCartao`; `boleto` traz `linhaDigitavel` e `vencimento`.
+- `forma_pagamento` está **depreciado**: traz o mesmo conteúdo de `formaPagamento`, com os nomes
+  antigos (`final_cartao`, `linha_digitavel`). Continua na resposta para os clientes atuais; use
+  `formaPagamento` em código novo. No `POST /pedidos`, o corpo continua usando `forma_pagamento`.
 
 ## Erros
 
@@ -72,17 +76,21 @@ cancelados continuam em `GET /pedidos` (inclusive com `?status=cancelado`) e em
 Recusas no formato Problem Details (RFC 9457), com
 `Content-Type: application/problem+json`:
 
+O `type` é uma URI absoluta, como pede o contrato. A tabela mostra só o final; o valor completo
+começa com `https://api.techlog.example/problemas/`.
+
 | Status | `type` | Quando |
 |--------|--------|--------|
-| 400 | `/problemas/validacao` | JSON inválido, `motivo` que não é texto ou com mais de 200 caracteres (traz `campo`) |
-| 413 | `/problemas/validacao` | corpo acima de 100 KB |
-| 415 | `/problemas/validacao` | charset ou codificação do corpo não suportados |
-| 404 | `/problemas/pedido-nao-encontrado` | o pedido não existe |
-| 409 | `/problemas/cancelamento-nao-permitido` | o pedido está `enviado`, `entregue` ou já `cancelado` (traz `statusAtual`) |
+| 400 | `…/motivo-invalido` | `motivo` que não é texto ou com mais de 200 caracteres (traz `campo`) |
+| 400 | `…/validacao` | corpo que não é JSON válido |
+| 413 | `…/validacao` | corpo acima de 100 KB |
+| 415 | `…/validacao` | charset ou codificação do corpo não suportados |
+| 404 | `…/pedido-nao-encontrado` | o pedido não existe |
+| 409 | `…/cancelamento-nao-permitido` | o pedido está `enviado`, `entregue` ou já `cancelado` (traz `statusAtual`) |
 
 ```json
 {
-  "type": "/problemas/cancelamento-nao-permitido",
+  "type": "https://api.techlog.example/problemas/cancelamento-nao-permitido",
   "title": "Cancelamento não permitido",
   "status": 409,
   "detail": "O pedido PED-1003 já foi enviado e não pode mais ser cancelado.",

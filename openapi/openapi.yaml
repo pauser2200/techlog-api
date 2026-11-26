@@ -220,7 +220,7 @@ components:
 
     Pedido:
       type: object
-      required: [id, cliente, status, valor_total, criadoEm, forma_pagamento, itens]
+      required: [id, cliente, status, valor_total, criadoEm, forma_pagamento, formaPagamento, itens]
       properties:
         id:
           type: string
@@ -236,7 +236,13 @@ components:
           type: string
           format: date-time
         forma_pagamento:
-          $ref: '#/components/schemas/FormaPagamento'
+          allOf:
+            - $ref: '#/components/schemas/FormaPagamento'
+          deprecated: true
+          description: >-
+            Nome do legado, mantido para os clientes atuais. Use formaPagamento.
+        formaPagamento:
+          $ref: '#/components/schemas/FormaPagamentoResposta'
         itens:
           type: array
           items:
@@ -306,6 +312,48 @@ components:
         tipo:
           const: boleto
         linha_digitavel:
+          type: string
+        vencimento:
+          type: string
+          format: date
+
+    FormaPagamentoResposta:
+      description: >-
+        Forma de pagamento na resposta, em camelCase. Mesmo conteúdo de
+        forma_pagamento (depreciado).
+      oneOf:
+        - $ref: '#/components/schemas/PagamentoCartaoResposta'
+        - $ref: '#/components/schemas/PagamentoPix'
+        - $ref: '#/components/schemas/PagamentoBoletoResposta'
+      discriminator:
+        propertyName: tipo
+        mapping:
+          cartao: '#/components/schemas/PagamentoCartaoResposta'
+          pix: '#/components/schemas/PagamentoPix'
+          boleto: '#/components/schemas/PagamentoBoletoResposta'
+
+    PagamentoCartaoResposta:
+      type: object
+      required: [tipo, bandeira, parcelas, finalCartao]
+      properties:
+        tipo:
+          const: cartao
+        bandeira:
+          type: string
+        parcelas:
+          type: integer
+          minimum: 1
+        finalCartao:
+          type: string
+          pattern: '^[0-9]{4}$'
+
+    PagamentoBoletoResposta:
+      type: object
+      required: [tipo, linhaDigitavel, vencimento]
+      properties:
+        tipo:
+          const: boleto
+        linhaDigitavel:
           type: string
         vencimento:
           type: string
@@ -404,6 +452,11 @@ components:
           bandeira: visa
           parcelas: 2
           final_cartao: '4242'
+        formaPagamento:
+          tipo: cartao
+          bandeira: visa
+          parcelas: 2
+          finalCartao: '4242'
         itens:
           - sku: CX-MED
             quantidade: 1
@@ -421,6 +474,9 @@ components:
         forma_pagamento:
           tipo: pix
           chave: ana.souza@exemplo.com
+        formaPagamento:
+          tipo: pix
+          chave: ana.souza@exemplo.com
         itens:
           - sku: CX-PEQ
             quantidade: 2
@@ -435,6 +491,9 @@ components:
         valor_total: 79.8
         criadoEm: '2026-10-01T12:00:00Z'
         forma_pagamento:
+          tipo: pix
+          chave: fabio@exemplo.com
+        formaPagamento:
           tipo: pix
           chave: fabio@exemplo.com
         itens:
@@ -463,6 +522,11 @@ components:
             bandeira: visa
             parcelas: 2
             final_cartao: '4242'
+          formaPagamento:
+            tipo: cartao
+            bandeira: visa
+            parcelas: 2
+            finalCartao: '4242'
           itens:
             - sku: CX-MED
               quantidade: 1
@@ -478,6 +542,10 @@ components:
           forma_pagamento:
             tipo: boleto
             linha_digitavel: 34191.79001 01043.510047 91020.150008 1 10010000008990
+            vencimento: '2026-10-02'
+          formaPagamento:
+            tipo: boleto
+            linhaDigitavel: 34191.79001 01043.510047 91020.150008 1 10010000008990
             vencimento: '2026-10-02'
           itens:
             - sku: CX-GDE
