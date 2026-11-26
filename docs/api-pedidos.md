@@ -35,7 +35,17 @@ Exemplo de um pedido cancelado, com todos os campos que a API pode devolver:
 
 ## Erros
 
-Erros devolvem `{ "erro": "mensagem" }`.
+O formato do erro depende do endpoint. Os formatos antigos são mantidos porque clientes dependem
+deles.
+
+| Endpoint | Situação | Status | Corpo |
+|----------|----------|--------|-------|
+| `GET /pedidos/{id}` | pedido não existe | 404 | `{ "erro": "Pedido não encontrado" }` |
+| `POST /pedidos` | `cliente` ausente | 400 | `{ "message": "cliente é obrigatório", "code": "VALIDACAO" }` |
+| `POST /pedidos/{id}/cancelamento` | ver [Cancelamento](#cancelamento) | 400, 404, 409, 413, 415 | Problem Details (`application/problem+json`) |
+
+Nos endpoints antigos, um corpo JSON malformado e uma rota inexistente recebem a página de erro
+padrão do servidor (HTML), não JSON.
 
 ## Cancelamento
 
