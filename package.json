@@ -13,6 +13,7 @@
     "start": "tsx src/server.ts",
     "conferir": "node scripts/conferir-ambiente.mjs",
     "diagnostico": "node scripts/diagnostico.mjs",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "test:aceite": "tsx --test --test-reporter=spec \"tests/aceite/*.test.ts\"",
     "contrato:lint": "spectral lint openapi/openapi.yaml",
     "contrato:quebras": "node scripts/oasdiff.mjs breaking main:openapi/openapi.yaml openapi/openapi.yaml --fail-on ERR --lang pt-br",
