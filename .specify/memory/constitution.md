@@ -1,25 +1,21 @@
 <!--
 Sync Impact Report
-- Version change: (modelo sem versão) → 1.0.0
-- Princípios definidos (antes eram placeholders do modelo):
-  - [PRINCIPLE_1_NAME] → I. Nomes de campos em camelCase
-  - [PRINCIPLE_2_NAME] → II. Erros de endpoints novos em Problem Details (RFC 9457)
-  - [PRINCIPLE_3_NAME] → III. Regra de negócio nova tem teste automatizado
-  - [PRINCIPLE_4_NAME] → IV. Mudanças pequenas, um pull request
-- Added sections: Contexto do Projeto (no lugar de [SECTION_2_NAME])
-- Removed sections: [PRINCIPLE_5_NAME] (foram informados 4 princípios);
-  [SECTION_3_NAME] (nenhum conteúdo informado)
-- Governance: texto proposto pelo agente (não informado na entrada); revisar
-- Follow-up TODOs: nenhum placeholder adiado
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - I. Nomes de campos em camelCase → I. Campos novos em camelCase
+    (a regra passa a valer só para campos novos)
+- Added sections: nenhuma
+- Removed sections: nenhuma
+- Follow-up TODOs: nenhum
 -->
 
 # TechLog API Constitution
 
 ## Core Principles
 
-### I. Nomes de campos em camelCase
+### I. Campos novos em camelCase
 
-- Nomes de campos da API MUST usar camelCase (ex.: `valorTotal`, `criadoEm`).
+- Todo campo novo da API MUST usar camelCase (ex.: `valorTotal`, `criadoEm`).
 
 ### II. Erros de endpoints novos em Problem Details (RFC 9457)
 
@@ -51,4 +47,4 @@ tem um cliente web que a consome.
 - Versionamento semântico: MAJOR para remover ou redefinir um princípio de forma incompatível;
   MINOR para princípio ou seção nova, ou orientação ampliada; PATCH para ajustes de redação.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-26 | **Last Amended**: 2026-11-26
+**Version**: 1.1.0 | **Ratified**: 2026-11-26 | **Last Amended**: 2026-11-26
