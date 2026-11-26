@@ -11,16 +11,27 @@ Documentação escrita à mão em 2024. Atualize quando mudar a API.
 
 ## Campos do pedido
 
+Exemplo de um pedido cancelado, com todos os campos que a API pode devolver:
+
 ```json
 {
   "id": "PED-1001",
   "cliente": "Ana Souza",
-  "status": "pago",
-  "total": 79.8,
-  "data_criacao": "2026-09-28T10:15:00Z",
-  "forma_pagamento": { "tipo": "pix" }
+  "status": "cancelado",
+  "valor_total": 79.8,
+  "criadoEm": "2026-09-28T10:15:00Z",
+  "forma_pagamento": { "tipo": "pix", "chave": "ana.souza@exemplo.com" },
+  "itens": [{ "sku": "CX-PEQ", "quantidade": 2, "preco_unitario": 39.9 }],
+  "canceladoEm": "2026-10-01T09:00:00Z",
+  "motivoCancelamento": "cliente desistiu"
 }
 ```
+
+- `status`: `criado`, `pago`, `enviado`, `entregue` ou `cancelado`.
+- `canceladoEm` e `motivoCancelamento` só aparecem em pedidos cancelados; `motivoCancelamento`,
+  só quando o cancelamento teve motivo.
+- `forma_pagamento` muda conforme o `tipo`: `pix` traz `chave`; `cartao` traz `bandeira`,
+  `parcelas` e `final_cartao`; `boleto` traz `linha_digitavel` e `vencimento`.
 
 ## Erros
 
