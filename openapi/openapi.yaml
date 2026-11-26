@@ -124,7 +124,8 @@ paths:
       summary: Cancela um pedido
       description: >-
         Cancela um pedido criado ou pago. Cancelar de novo um pedido já
-        cancelado devolve o pedido como está, sem erro.
+        cancelado é recusado com 409, e a data e o motivo do primeiro
+        cancelamento não mudam.
       tags: [cancelamento]
       requestBody:
         required: false
@@ -175,11 +176,13 @@ paths:
                     detail: Não existe pedido com o id PED-9999.
                     instance: /pedidos/PED-9999/cancelamento
         '409':
-          description: O pedido já saiu para entrega e não pode ser cancelado.
+          description: >-
+            O status atual do pedido não permite cancelamento: ele já foi
+            enviado, entregue ou cancelado.
           content:
             application/problem+json:
               schema:
-                $ref: '#/components/schemas/Problema'
+                $ref: '#/components/schemas/ProblemaCancelamentoNaoPermitido'
               examples:
                 jaEnviado:
                   value:
@@ -188,6 +191,15 @@ paths:
                     status: 409
                     detail: O pedido PED-1003 está com status enviado. Só pedidos criados ou pagos podem ser cancelados.
                     instance: /pedidos/PED-1003/cancelamento
+                    statusAtual: enviado
+                jaCancelado:
+                  value:
+                    type: https://api.techlog.example/problemas/cancelamento-nao-permitido
+                    title: Cancelamento não permitido
+                    status: 409
+                    detail: O pedido PED-1001 já está cancelado.
+                    instance: /pedidos/PED-1001/cancelamento
+                    statusAtual: cancelado
 
 components:
   parameters:
@@ -337,6 +349,29 @@ components:
           type: string
         instance:
           type: string
+
+    ProblemaCancelamentoNaoPermitido:
+      type: object
+      description: >-
+        Problem Details (RFC 9457) da recusa de cancelamento por causa do
+        status atual do pedido.
+      required: [type, title, status, statusAtual]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        statusAtual:
+          type: string
+          enum: [enviado, entregue, cancelado]
+          description: Status atual do pedido, que impede o cancelamento.
 
     ErroLegado:
       type: object
