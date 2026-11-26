@@ -12,3 +12,5 @@ Não leia esses arquivos, essas branches nem essas tags, e não use o que estive
 Trabalhe na branch em que o repositório está. Não crie nem troque de branch, a menos que o pedido diga para fazer isso.
 
 Nas etapas do Spec Kit que fazem perguntas, registre em Clarifications só o que a pessoa respondeu. Decisão sua vai em Assumptions, e você avisa no fim da resposta.
+
+@AGENTS.md
