@@ -1,0 +1,40 @@
+# Portões do contrato em todo pull request para a main.
+name: Contrato
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contrato:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint do contrato (style guide)
+        run: npm run contrato:lint
+
+      # O oasdiff roda pelo mesmo script do terminal, na versão fixada em
+      # scripts/instalar-oasdiff.mjs: a mensagem no PR é a mesma que você vê local.
+      - name: Instala o oasdiff
+        run: npm run oasdiff:instalar
+
+      - name: Breaking change contra a main
+        run: npm run contrato:quebras
+        env:
+          CONTRATO_BASE: origin/${{ github.base_ref }}
+
+      - name: Testes de aceite
+        run: npm run test:aceite
