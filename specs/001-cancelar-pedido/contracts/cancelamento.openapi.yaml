@@ -1,0 +1,154 @@
+openapi: 3.1.0
+info:
+  title: TechLog API - Cancelamento de pedido
+  version: 1.0.0
+  description: >
+    Contrato do endpoint novo de cancelamento e das mudanças que ele traz ao pedido
+    serializado. Os demais endpoints não mudam de formato.
+paths:
+  /pedidos/{id}/cancelamento:
+    post:
+      summary: Cancela um pedido que ainda não foi enviado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            example: PED-1001
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelamentoRequisicao'
+            examples:
+              comMotivo:
+                value: { motivo: cliente desistiu }
+              semMotivo:
+                value: {}
+      responses:
+        '200':
+          description: Pedido cancelado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+        '400':
+          description: Corpo inválido (JSON malformado ou motivo inválido)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemaValidacao'
+              example:
+                type: /problemas/validacao
+                title: Requisição inválida
+                status: 400
+                detail: O motivo pode ter no máximo 200 caracteres.
+                instance: /pedidos/PED-1001/cancelamento
+                campo: motivo
+        '404':
+          description: Pedido não encontrado
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              example:
+                type: /problemas/pedido-nao-encontrado
+                title: Pedido não encontrado
+                status: 404
+                detail: Não existe pedido com o id PED-9999.
+                instance: /pedidos/PED-9999/cancelamento
+        '413':
+          description: Corpo da requisição acima do limite (100 KB)
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '415':
+          description: Charset ou codificação do corpo não suportados
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+        '409':
+          description: O status atual do pedido não permite cancelamento
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemaCancelamentoNaoPermitido'
+              example:
+                type: /problemas/cancelamento-nao-permitido
+                title: Cancelamento não permitido
+                status: 409
+                detail: O pedido PED-1003 já foi enviado e não pode mais ser cancelado.
+                instance: /pedidos/PED-1003/cancelamento
+                statusAtual: enviado
+components:
+  schemas:
+    CancelamentoRequisicao:
+      type: object
+      properties:
+        motivo:
+          type: string
+          description: >
+            Opcional. Espaços nas pontas são removidos; vazio vale como sem motivo.
+            Máximo de 200 caracteres.
+    Status:
+      type: string
+      enum: [criado, pago, enviado, entregue, cancelado]
+    Pedido:
+      type: object
+      description: >
+        Formato já usado por GET /pedidos e GET /pedidos/{id}, com o status cancelado
+        e os campos opcionais canceladoEm e motivoCancelamento.
+      required: [id, cliente, status, valor_total, criadoEm, forma_pagamento, itens]
+      properties:
+        id: { type: string }
+        cliente: { type: string }
+        status: { $ref: '#/components/schemas/Status' }
+        valor_total: { type: number }
+        criadoEm: { type: string, format: date-time }
+        forma_pagamento: { type: object }
+        itens:
+          type: array
+          items:
+            type: object
+            properties:
+              sku: { type: string }
+              quantidade: { type: integer }
+              preco_unitario: { type: number }
+        canceladoEm:
+          type: string
+          format: date-time
+          description: Presente só em pedidos cancelados.
+        motivoCancelamento:
+          type: string
+          maxLength: 200
+          description: Presente só em pedidos cancelados com motivo.
+    Problema:
+      type: object
+      required: [type, title, status, detail, instance]
+      properties:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+    ProblemaValidacao:
+      allOf:
+        - $ref: '#/components/schemas/Problema'
+        - type: object
+          properties:
+            campo:
+              type: string
+              description: Campo da requisição que causou a recusa, quando houver.
+    ProblemaCancelamentoNaoPermitido:
+      allOf:
+        - $ref: '#/components/schemas/Problema'
+        - type: object
+          required: [statusAtual]
+          properties:
+            statusAtual:
+              type: string
+              enum: [enviado, entregue, cancelado]

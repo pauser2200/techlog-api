@@ -2,7 +2,7 @@
 // Cada chamada a criarBase() devolve uma cópia nova, para que os testes
 // e as execuções não interfiram umas nas outras.
 
-export type Status = 'criado' | 'pago' | 'enviado' | 'entregue';
+export type Status = 'criado' | 'pago' | 'enviado' | 'entregue' | 'cancelado';
 
 export type FormaPagamento =
   | { tipo: 'cartao'; bandeira: string; parcelas: number; finalCartao: string }
@@ -23,6 +23,9 @@ export interface Pedido {
   valorTotal: number;
   criadoEm: string;
   formaPagamento: FormaPagamento;
+  // Só existem em pedidos cancelados. Definidos pelo sistema no cancelamento.
+  canceladoEm?: string;
+  motivoCancelamento?: string;
 }
 
 const SEMENTE: Pedido[] = [
@@ -91,7 +94,26 @@ export function criarBase() {
       pedidos.push(pedido);
       return pedido;
     },
+    // Só pedidos ainda não enviados (criado ou pago) podem ser cancelados.
+    // Cancelar um pedido pago não faz estorno: o pagamento é tratado fora do sistema.
+    cancelar: (id: string, motivo?: string): ResultadoCancelamento => {
+      const pedido = pedidos.find((p) => p.id === id);
+      if (!pedido) return { tipo: 'nao-encontrado' };
+      if (pedido.status !== 'criado' && pedido.status !== 'pago') {
+        return { tipo: 'nao-permitido', statusAtual: pedido.status };
+      }
+      pedido.status = 'cancelado';
+      pedido.canceladoEm = new Date().toISOString();
+      const motivoLimpo = motivo?.trim();
+      if (motivoLimpo) pedido.motivoCancelamento = motivoLimpo;
+      return { tipo: 'ok', pedido };
+    },
   };
 }
+
+export type ResultadoCancelamento =
+  | { tipo: 'ok'; pedido: Pedido }
+  | { tipo: 'nao-encontrado' }
+  | { tipo: 'nao-permitido'; statusAtual: Status };
 
 export type Base = ReturnType<typeof criarBase>;
