@@ -1,0 +1,57 @@
+# Style guide da TechLog, conferido pela máquina.
+# O ruleset padrão confere se o contrato é um OpenAPI válido e bem descrito.
+# As regras abaixo são da casa. Operações com x-legado: true mantêm formatos
+# antigos, então nelas as regras de erro só avisam.
+
+extends: ["spectral:oas"]
+
+rules:
+  techlog-caminhos-kebab-case:
+    description: Caminhos em minúsculas, com hífen entre palavras.
+    message: "Caminho fora do padrão: {{property}}"
+    severity: error
+    given: "$.paths"
+    then:
+      field: "@key"
+      function: pattern
+      functionOptions:
+        match: "^(/([a-z0-9]+(-[a-z0-9]+)*|\\{[a-zA-Z]+\\}))+$"
+
+  techlog-operation-id-camel-case:
+    description: operationId em camelCase, para virar nome de função nos geradores.
+    severity: error
+    given: "$.paths[*][get,post,put,patch,delete].operationId"
+    then:
+      function: casing
+      functionOptions:
+        type: camel
+
+  techlog-erros-problem-details:
+    description: Endpoint novo responde erros 4xx e 5xx como application/problem+json (RFC 9457).
+    message: "{{description}}"
+    severity: error
+    given: "$.paths[*][?(@ && @['x-legado'] !== true)].responses[?(@property.match(/^[45]/))].content"
+    then:
+      field: application/problem+json
+      function: truthy
+
+  techlog-erros-problem-details-legado:
+    description: Endpoint legado ainda responde erro fora do formato RFC 9457.
+    message: "{{description}}"
+    severity: warn
+    given: "$.paths[*][?(@ && @['x-legado'] === true)].responses[?(@property.match(/^[45]/))].content"
+    then:
+      field: application/problem+json
+      function: truthy
+
+  techlog-campos-camel-case:
+    description: Campos em camelCase. Os campos do legado ficam como aviso até serem depreciados.
+    message: "Campo fora do padrão: {{property}}"
+    severity: warn
+    resolved: false
+    given: "$.components.schemas..properties"
+    then:
+      field: "@key"
+      function: casing
+      functionOptions:
+        type: camel

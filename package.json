@@ -9,19 +9,39 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "test:aceite": "tsx --test --test-reporter=spec \"tests/aceite/*.test.ts\"",
+    "dev:validado": "cross-env VALIDAR_CONTRATO=1 tsx watch src/server.ts",
     "start": "tsx src/server.ts",
     "conferir": "node scripts/conferir-ambiente.mjs",
     "diagnostico": "node scripts/diagnostico.mjs",
-    "test": "node --import tsx --test \"tests/**/*.test.ts\""
+    "test:aceite": "tsx --test --test-reporter=spec \"tests/aceite/*.test.ts\"",
+    "contrato:lint": "spectral lint openapi/openapi.yaml",
+    "contrato:quebras": "node scripts/oasdiff.mjs breaking main:openapi/openapi.yaml openapi/openapi.yaml --fail-on ERR --lang pt-br",
+    "contrato:changelog": "node scripts/oasdiff.mjs changelog main:openapi/openapi.yaml openapi/openapi.yaml --lang pt-br",
+    "oasdiff:instalar": "node scripts/instalar-oasdiff.mjs",
+    "mock": "prism mock openapi/openapi.yaml",
+    "mock:dinamico": "prism mock --dynamic openapi/openapi.yaml",
+    "conformidade": "node scripts/conformidade.mjs",
+    "conformidade:completa": "node scripts/conformidade.mjs --completa",
+    "gerar:tipos": "openapi-typescript openapi/openapi.yaml -o src/gerado/api.d.ts",
+    "tipos": "npm run --silent gerar:tipos && tsc",
+    "portoes": "node scripts/portoes.mjs",
+    "eval": "node scripts/eval.mjs",
+    "demo:drift-codigo": "node scripts/demo/drift-codigo.mjs",
+    "preparar:5.2": "node scripts/preparar-5.2.mjs"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "express-openapi-validator": "^5.5.0"
   },
   "devDependencies": {
+    "@stoplight/prism-cli": "5.16.0",
+    "@stoplight/spectral-cli": "6.17.0",
     "@types/express": "^5.0.0",
     "@types/node": "^22.0.0",
+    "cross-env": "^10.0.0",
+    "openapi-typescript": "^7.8.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.9.0"
+    "typescript": "^5.9.0",
+    "yaml": "^2.8.0"
   }
 }
