@@ -44,8 +44,9 @@ deles.
 | `POST /pedidos` | `cliente` ausente | 400 | `{ "message": "cliente é obrigatório", "code": "VALIDACAO" }` |
 | `POST /pedidos/{id}/cancelamento` | ver [Cancelamento](#cancelamento) | 400, 404, 409, 413, 415 | Problem Details (`application/problem+json`) |
 
-Nos endpoints antigos, um corpo JSON malformado e uma rota inexistente recebem a página de erro
-padrão do servidor (HTML), não JSON.
+Nos endpoints antigos, um corpo que não pôde ser lido (JSON malformado, corpo acima de 100 KB,
+charset não suportado) e uma rota inexistente recebem a página de erro padrão do servidor (HTML),
+não JSON. A página traz só a mensagem do status (ex.: "Bad Request"), sem detalhes internos.
 
 ## Cancelamento
 
