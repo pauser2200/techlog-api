@@ -1,14 +1,3 @@
-<!--
-Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles:
-  - I. Nomes de campos em camelCase → I. Campos novos em camelCase
-    (a regra passa a valer só para campos novos)
-- Added sections: nenhuma
-- Removed sections: nenhuma
-- Follow-up TODOs: nenhum
--->
-
 # TechLog API Constitution
 
 ## Core Principles

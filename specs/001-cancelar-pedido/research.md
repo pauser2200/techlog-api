@@ -54,13 +54,14 @@ decidido aqui a partir do código existente, da spec e da constituição.
   o status (mistura erro de entrada com conflito de estado); `type: "about:blank"` (não distingue
   os casos).
 
-## R5. JSON malformado no endpoint novo
+## R5. Erros de leitura do corpo no endpoint novo
 
 - **Decision**: um middleware de erro exportado por `src/pedidos/rotas.ts` e registrado em
-  `src/app.ts` depois das rotas. Ele só age quando o erro é de parse do `express.json()`
-  (`type === 'entity.parse.failed'`) e o caminho é `POST /pedidos/{id}/cancelamento`, convertendo
-  em Problem Details 400; nos outros casos chama `next(err)`.
-- **Rationale**: sem isso, um corpo inválido no endpoint novo receberia a página de erro padrão do
+  `src/app.ts` depois das rotas. Ele age em qualquer erro 4xx do `express.json()` (JSON
+  malformado → 400, corpo acima de 100 KB → 413, charset ou codificação não suportados → 415)
+  quando o caminho é `POST /pedidos/{id}/cancelamento`, convertendo em Problem Details com o
+  mesmo status; nos outros casos chama `next(err)`. Ampliado pela T021 (convergência).
+- **Rationale**: sem isso, um erro ao ler o corpo no endpoint novo receberia a página de erro padrão do
   Express, fora do Princípio II. O `express.json()` é registrado no `app.ts`, antes do roteador, e
   o Express não entrega esse erro a um middleware de erro de dentro de um `Router`; por isso o
   registro precisa ser no `app.ts`. Limitar ao endpoint novo mantém o comportamento atual dos

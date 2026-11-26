@@ -105,9 +105,11 @@ filtrada pelo status cancelado, com a data do cancelamento.
 
 - Pedido já cancelado: uma nova tentativa de cancelamento é recusada com a explicação de que o
   pedido já está cancelado, e a data e o motivo originais não mudam.
-- Motivo vazio: tratado como "sem motivo". Motivo só com espaços também conta como vazio.
+- Motivo vazio: tratado como "sem motivo".
 - Motivo com mais de 200 caracteres: o cancelamento é recusado com erro de validação e o pedido
   não muda.
+- Motivo que não é texto (por exemplo, um número): o cancelamento é recusado com erro de
+  validação e o pedido não muda.
 - Pedidos que nunca foram cancelados não ganham data nem motivo de cancelamento.
 - O cliente web atual, que mostra a lista de pedidos, continua funcionando quando a lista inclui
   pedidos cancelados.
@@ -119,7 +121,8 @@ filtrada pelo status cancelado, com a data do cancelamento.
 - **FR-001**: O sistema MUST permitir que quem opera a loja cancele um pedido informando qual é o
   pedido.
 - **FR-002**: O sistema MUST aceitar, de forma opcional, um motivo em texto livre para o
-  cancelamento, com no máximo 200 caracteres. Motivo vazio MUST ser tratado como sem motivo.
+  cancelamento, com no máximo 200 caracteres, contados sem os espaços do começo e do fim.
+  Motivo vazio MUST ser tratado como sem motivo.
 - **FR-002a**: O sistema MUST recusar com erro de validação, sem alterar o pedido, um
   cancelamento cujo motivo tenha mais de 200 caracteres.
 - **FR-003**: O sistema MUST permitir o cancelamento apenas de pedidos com status criado ou pago.
@@ -160,8 +163,8 @@ filtrada pelo status cancelado, com a data do cancelamento.
   cancelado e com data de cancelamento registrada.
 - **SC-002**: 100% das tentativas de cancelar pedidos enviados, entregues ou já cancelados são
   recusadas sem alterar o pedido.
-- **SC-003**: Em toda recusa, quem tentou consegue identificar, só pela resposta, por que o
-  pedido não pôde ser cancelado.
+- **SC-003**: 100% das recusas informam o motivo da recusa e, quando a causa for o status do
+  pedido, qual é esse status.
 - **SC-004**: 100% dos pedidos cancelados continuam visíveis na lista de pedidos, com status e
   data do cancelamento.
 - **SC-005**: O cliente web atual continua mostrando a lista de pedidos sem erros depois da
@@ -173,6 +176,8 @@ filtrada pelo status cancelado, com a data do cancelamento.
   cancelamento.
 - O cancelamento é definitivo: não há como desfazer um cancelamento nesta funcionalidade.
 - Um motivo formado só por espaços conta como vazio (sem motivo).
+- O limite de 200 caracteres do motivo é contado depois de remover os espaços do começo e do fim.
+- Um motivo informado que não seja texto é tratado como erro de validação, e não como "sem motivo".
 - A data do cancelamento é registrada pelo sistema no momento do cancelamento, não informada por
   quem cancela.
 - Mostrar pedidos cancelados de forma diferente no cliente web fica fora do escopo; o requisito é

@@ -41,15 +41,14 @@ o cliente web atual tem de continuar funcionando sem alteração
 
 | Princípio | Como o plano atende | Situação |
 |-----------|---------------------|----------|
-| I. Nomes de campos em camelCase | Campos novos: `motivo` (requisição), `canceladoEm`, `motivoCancelamento` (resposta), extensões `statusAtual` e `campo` | Passa |
-| II. Erros de endpoints novos em Problem Details | O endpoint novo responde 400/404/409 em `application/problem+json` com `type`, `title`, `status`, `detail`, `instance`; inclusive JSON malformado (R5). `GET /pedidos/{id}` e `POST /pedidos` mantêm os formatos atuais | Passa |
+| I. Campos novos em camelCase | Campos novos: `motivo` (requisição), `canceladoEm`, `motivoCancelamento` (resposta), extensões `statusAtual` e `campo` | Passa |
+| II. Erros de endpoints novos em Problem Details | O endpoint novo responde 400/404/409/413/415 em `application/problem+json` com `type`, `title`, `status`, `detail`, `instance`; inclusive erros de leitura do corpo (R5). `GET /pedidos/{id}` e `POST /pedidos` mantêm os formatos atuais | Passa |
 | III. Regra de negócio nova tem teste | Testes da regra (base) e de integração (HTTP) para cada transição permitida e cada recusa, incluindo o corpo Problem Details | Passa |
 | IV. Mudanças pequenas, um PR | Uma rota, um método na base, dois campos no serializador, testes e docs; sem refatorar código existente | Passa |
 
 **Observação**: os campos existentes em snake_case (`valor_total`, `forma_pagamento`,
-`preco_unitario`) já estão em desacordo com o Princípio I. Este plano não cria nem altera esses
-campos; renomeá-los quebraria o cliente web e ficaria fora do escopo (FR-012). Não é desvio
-introduzido por esta feature, por isso não entra em Complexity Tracking.
+`preco_unitario`) continuam como estão (FR-012). Desde a constituição 1.1.0, o Princípio I vale
+só para campos novos, então esses campos não são desvio.
 
 **Re-check pós-design (Fase 1)**: o contrato, o modelo de dados e o quickstart mantêm as quatro
 linhas acima. Sem violações.
@@ -75,11 +74,11 @@ specs/001-cancelar-pedido/
 
 ```text
 src/
-├── app.ts                  # registra o middleware de JSON inválido do cancelamento (R5)
+├── app.ts                  # registra o middleware de erros de leitura do corpo do cancelamento (R5)
 ├── server.ts               # sem mudança
 └── pedidos/
     ├── dados.ts            # Status + 'cancelado'; campos canceladoEm/motivoCancelamento; base.cancelar()
-    ├── rotas.ts            # POST /pedidos/:id/cancelamento; Problem Details; exporta o middleware de JSON inválido
+    ├── rotas.ts            # POST /pedidos/:id/cancelamento; Problem Details; exporta o middleware de erros de leitura do corpo
     └── serializar.ts       # serializa canceladoEm e motivoCancelamento quando existirem
 
 tests/
