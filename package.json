@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "test:aceite": "tsx --test --test-reporter=spec \"tests/aceite/*.test.ts\"",
     "start": "tsx src/server.ts",
     "conferir": "node scripts/conferir-ambiente.mjs",
     "diagnostico": "node scripts/diagnostico.mjs",

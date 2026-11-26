@@ -1,0 +1,450 @@
+openapi: 3.1.0
+info:
+  title: TechLog API
+  version: 1.0.0
+  summary: API de pedidos da TechLog, empresa fictícia usada no curso.
+  description: >-
+    Contrato do módulo de Pedidos. Descreve o comportamento atual da API,
+    inclusive o que veio do legado. Operações marcadas com x-legado mantêm
+    formatos antigos que os clientes já consomem.
+  contact:
+    name: Time de Pedidos
+    url: https://api.techlog.example
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: http://localhost:3000
+    description: Ambiente local
+tags:
+  - name: pedidos
+    description: Consulta e criação de pedidos.
+  - name: cancelamento
+    description: Cancelamento de pedidos antes do envio.
+
+paths:
+  /pedidos:
+    get:
+      operationId: listarPedidos
+      summary: Lista os pedidos
+      description: Devolve todos os pedidos, com filtro opcional por status.
+      tags: [pedidos]
+      x-legado: true
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filtra pelo status do pedido.
+          schema:
+            $ref: '#/components/schemas/StatusPedido'
+      responses:
+        '200':
+          description: Lista de pedidos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedido'
+              examples:
+                pedidos:
+                  $ref: '#/components/examples/ListaDePedidos'
+    post:
+      operationId: criarPedido
+      summary: Cria um pedido
+      description: Cria um pedido com status criado.
+      tags: [pedidos]
+      x-legado: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NovoPedido'
+            examples:
+              pix:
+                $ref: '#/components/examples/NovoPedidoPix'
+      responses:
+        '201':
+          description: Pedido criado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                criado:
+                  $ref: '#/components/examples/PedidoCriado'
+        '400':
+          description: Dados inválidos, no formato de erro antigo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroValidacaoLegado'
+              examples:
+                semCliente:
+                  value:
+                    message: cliente é obrigatório
+                    code: VALIDACAO
+
+  /pedidos/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdPedido'
+    get:
+      operationId: buscarPedido
+      summary: Busca um pedido
+      description: Devolve um pedido pelo id.
+      tags: [pedidos]
+      x-legado: true
+      responses:
+        '200':
+          description: O pedido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                pago:
+                  $ref: '#/components/examples/PedidoPago'
+        '404':
+          description: Pedido não encontrado, no formato de erro antigo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErroLegado'
+              examples:
+                naoEncontrado:
+                  value:
+                    erro: Pedido não encontrado
+
+  /pedidos/{id}/cancelamento:
+    parameters:
+      - $ref: '#/components/parameters/IdPedido'
+    post:
+      operationId: cancelarPedido
+      summary: Cancela um pedido
+      description: >-
+        Cancela um pedido criado ou pago. Cancelar de novo um pedido já
+        cancelado devolve o pedido como está, sem erro.
+      tags: [cancelamento]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoDeCancelamento'
+            examples:
+              comMotivo:
+                value:
+                  motivo: Cliente desistiu da compra
+      responses:
+        '200':
+          description: Pedido cancelado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pedido'
+              examples:
+                cancelado:
+                  $ref: '#/components/examples/PedidoCancelado'
+        '400':
+          description: Motivo inválido.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              examples:
+                motivoLongo:
+                  value:
+                    type: https://api.techlog.example/problemas/motivo-invalido
+                    title: Motivo inválido
+                    status: 400
+                    detail: O motivo é opcional e tem no máximo 200 caracteres.
+                    instance: /pedidos/PED-1001/cancelamento
+        '404':
+          description: Pedido não encontrado.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              examples:
+                naoEncontrado:
+                  value:
+                    type: https://api.techlog.example/problemas/pedido-nao-encontrado
+                    title: Pedido não encontrado
+                    status: 404
+                    detail: Não existe pedido com o id PED-9999.
+                    instance: /pedidos/PED-9999/cancelamento
+        '409':
+          description: O pedido já saiu para entrega e não pode ser cancelado.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problema'
+              examples:
+                jaEnviado:
+                  value:
+                    type: https://api.techlog.example/problemas/cancelamento-nao-permitido
+                    title: Cancelamento não permitido
+                    status: 409
+                    detail: O pedido PED-1003 está com status enviado. Só pedidos criados ou pagos podem ser cancelados.
+                    instance: /pedidos/PED-1003/cancelamento
+
+components:
+  parameters:
+    IdPedido:
+      name: id
+      in: path
+      required: true
+      description: Identificador do pedido.
+      schema:
+        type: string
+        pattern: '^PED-[0-9]+$'
+        examples: [PED-1001]
+
+  schemas:
+    StatusPedido:
+      type: string
+      enum: [criado, pago, enviado, entregue, cancelado]
+
+    Pedido:
+      type: object
+      required: [id, cliente, status, valor_total, criadoEm, forma_pagamento, itens]
+      properties:
+        id:
+          type: string
+          examples: [PED-1001]
+        cliente:
+          type: string
+        status:
+          $ref: '#/components/schemas/StatusPedido'
+        valor_total:
+          type: number
+          description: Valor total em reais. Nome do legado.
+        criadoEm:
+          type: string
+          format: date-time
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+        itens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        canceladoEm:
+          type: string
+          format: date-time
+          description: Presente só em pedidos cancelados.
+        motivoCancelamento:
+          type: string
+          maxLength: 200
+          description: Presente quando o cancelamento informou um motivo.
+
+    Item:
+      type: object
+      required: [sku, quantidade, preco_unitario]
+      properties:
+        sku:
+          type: string
+        quantidade:
+          type: integer
+          minimum: 1
+        preco_unitario:
+          type: number
+          minimum: 0
+
+    FormaPagamento:
+      oneOf:
+        - $ref: '#/components/schemas/PagamentoCartao'
+        - $ref: '#/components/schemas/PagamentoPix'
+        - $ref: '#/components/schemas/PagamentoBoleto'
+      discriminator:
+        propertyName: tipo
+        mapping:
+          cartao: '#/components/schemas/PagamentoCartao'
+          pix: '#/components/schemas/PagamentoPix'
+          boleto: '#/components/schemas/PagamentoBoleto'
+
+    PagamentoCartao:
+      type: object
+      required: [tipo, bandeira, parcelas, final_cartao]
+      properties:
+        tipo:
+          const: cartao
+        bandeira:
+          type: string
+        parcelas:
+          type: integer
+          minimum: 1
+        final_cartao:
+          type: string
+          pattern: '^[0-9]{4}$'
+
+    PagamentoPix:
+      type: object
+      required: [tipo, chave]
+      properties:
+        tipo:
+          const: pix
+        chave:
+          type: string
+
+    PagamentoBoleto:
+      type: object
+      required: [tipo, linha_digitavel, vencimento]
+      properties:
+        tipo:
+          const: boleto
+        linha_digitavel:
+          type: string
+        vencimento:
+          type: string
+          format: date
+
+    NovoPedido:
+      type: object
+      required: [cliente, itens, forma_pagamento]
+      properties:
+        cliente:
+          type: string
+          minLength: 1
+        itens:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/Item'
+        forma_pagamento:
+          $ref: '#/components/schemas/FormaPagamento'
+
+    PedidoDeCancelamento:
+      type: object
+      properties:
+        motivo:
+          type: string
+          maxLength: 200
+
+    Problema:
+      type: object
+      description: Problem Details, RFC 9457.
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+
+    ErroLegado:
+      type: object
+      description: Formato de erro antigo das consultas.
+      required: [erro]
+      properties:
+        erro:
+          type: string
+
+    ErroValidacaoLegado:
+      type: object
+      description: Formato de erro antigo da criação de pedido.
+      required: [message, code]
+      properties:
+        message:
+          type: string
+        code:
+          type: string
+
+  examples:
+    PedidoPago:
+      value:
+        id: PED-1002
+        cliente: Bruno Lima
+        status: pago
+        valor_total: 97.4
+        criadoEm: '2026-09-29T08:40:00Z'
+        forma_pagamento:
+          tipo: cartao
+          bandeira: visa
+          parcelas: 2
+          final_cartao: '4242'
+        itens:
+          - sku: CX-MED
+            quantidade: 1
+            preco_unitario: 59.9
+          - sku: FITA-50
+            quantidade: 3
+            preco_unitario: 12.5
+    PedidoCancelado:
+      value:
+        id: PED-1001
+        cliente: Ana Souza
+        status: cancelado
+        valor_total: 79.8
+        criadoEm: '2026-09-28T10:15:00Z'
+        forma_pagamento:
+          tipo: pix
+          chave: ana.souza@exemplo.com
+        itens:
+          - sku: CX-PEQ
+            quantidade: 2
+            preco_unitario: 39.9
+        canceladoEm: '2026-10-01T09:00:00Z'
+        motivoCancelamento: Cliente desistiu da compra
+    PedidoCriado:
+      value:
+        id: PED-1006
+        cliente: Fabio Nunes
+        status: criado
+        valor_total: 79.8
+        criadoEm: '2026-10-01T12:00:00Z'
+        forma_pagamento:
+          tipo: pix
+          chave: fabio@exemplo.com
+        itens:
+          - sku: CX-PEQ
+            quantidade: 2
+            preco_unitario: 39.9
+    NovoPedidoPix:
+      value:
+        cliente: Fabio Nunes
+        itens:
+          - sku: CX-PEQ
+            quantidade: 2
+            preco_unitario: 39.9
+        forma_pagamento:
+          tipo: pix
+          chave: fabio@exemplo.com
+    ListaDePedidos:
+      value:
+        - id: PED-1002
+          cliente: Bruno Lima
+          status: pago
+          valor_total: 97.4
+          criadoEm: '2026-09-29T08:40:00Z'
+          forma_pagamento:
+            tipo: cartao
+            bandeira: visa
+            parcelas: 2
+            final_cartao: '4242'
+          itens:
+            - sku: CX-MED
+              quantidade: 1
+              preco_unitario: 59.9
+            - sku: FITA-50
+              quantidade: 3
+              preco_unitario: 12.5
+        - id: PED-1003
+          cliente: Carla Mendes
+          status: enviado
+          valor_total: 89.9
+          criadoEm: '2026-09-25T16:05:00Z'
+          forma_pagamento:
+            tipo: boleto
+            linha_digitavel: 34191.79001 01043.510047 91020.150008 1 10010000008990
+            vencimento: '2026-10-02'
+          itens:
+            - sku: CX-GDE
+              quantidade: 1
+              preco_unitario: 89.9
